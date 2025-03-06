@@ -7,6 +7,8 @@ This is a FastAPI-based application that extracts text from PDF resumes and clas
 - Extracts text using `pdfplumber`.
 - Cleans and preprocesses text using TF-IDF vectorization and Label Encoding.
 - Classifies resumes into predefined domains using an SVM model.
+- Ranks resumes based on a combination of classification confidence and skillset match score.
+- Provides a selection-based input for target domain selection.
 
 ## Installation
 ### Prerequisites
@@ -34,6 +36,16 @@ Replace `main` with the actual script filename if different.
     ```bash
     curl -X 'POST' 'http://127.0.0.1:8000/classify/' -F 'files=@resume.pdf'
     ```
+
+### Resume Ranking Endpoint
+- **POST/rank/**
+  -Accepts PDF resumes and a selected target domain.
+  -Returns ranked resumes in decreasing order of suitability for the target domain.
+  -Example request:
+   ```bash
+    curl -X 'POST' 'http://127.0.0.1:8000/rank/' -F 'files=@resume1.pdf' -F 'files=@resume2.pdf' -F 'target_domain=Python Developer'
+    ```
+  
 
 ## Model Details
 - The classification model is built using **Support Vector Machine (SVM)**.
