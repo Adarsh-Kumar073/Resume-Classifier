@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ResumeRankr</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f8f9fb;
+    }
+    header.hero {
+      text-align: center;
+      padding: 4rem 1rem;
+      background: linear-gradient(135deg, #6C63FF, #9a8cff);
+      color: white;
+      border-radius: 0 0 2rem 2rem;
+    }
+    .card {
+      padding: 2rem;
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+    .button-gradient {
+      background: linear-gradient(to right, #6C63FF, #8e85f3);
+      color: white;
+      border: none;
+      font-weight: 600;
+    }
+    #result, #classification {
+      margin-top: 1rem;
+      background: #f3f3f3;
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="container-fluid">
+  <ul><li><strong>ResumeRankr</strong></li></ul>
+  <ul>
+    <li><a href="#">Home</a></li>
+    <li><a href="#">Analyze</a></li>
+    <li><a href="#" role="button">Login</a></li>
+  </ul>
+</nav>
+
+<header class="hero">
+  <h1>Resume Analyzer</h1>
+  <p>Upload multiple resumes to <strong>rank</strong> or <strong>classify</strong> them by domain using AI</p>
+</header>
+
+<main class="container">
+  <div class="grid">
+    
+    <!-- RANK RESUMES SECTION -->
+    <section class="card">
+      <h3>🎯 Rank Resumes</h3>
+      <input type="file" id="rankFiles" multiple accept=".pdf" />
+      <label for="domainSelect">Select Domain for Ranking:</label>
+      <select id="domainSelect">
+        <option value="">-- Select Domain --</option>
+        <option>Advocate</option>
+        <option>Arts</option>
+        <option>Automation Testing</option>
+        <option>Blockchain</option>
+        <option>Business Analyst</option>
+        <option>Civil Engineer</option>
+        <option>Data Science</option>
+        <option>Database</option>
+        <option>DevOps Engineer</option>
+        <option>DotNet Developer</option>
+        <option>Electrical Engineering</option>
+        <option>ETL Developer</option>
+        <option>Hadoop</option>
+        <option>Health and fitness</option>
+        <option>HR</option>
+        <option>Java Developer</option>
+        <option>Mechanical Enginner</option>
+        <option>Network Security Engineer</option>
+        <option>Operation Manager</option>
+        <option>PMO</option>
+        <option>Python Developer</option>
+        <option>Sales</option>
+        <option>SAP Devreloper</option>
+        <option>Testing</option>
+        <option>Web Designing</option>
+      </select>
+      <br /><br />
+      <button class="button-gradient" onclick="rankResumes()">Analyze & Rank</button>
+      <div id="result"></div>
+    </section>
+
+    <!-- CLASSIFY RESUMES SECTION -->
+    <section class="card">
+      <h3>🧠 Classify Resumes by Domain</h3>
+      <input type="file" id="classifyFiles" multiple accept=".pdf" />
+      <br /><br />
+      <button class="button-gradient" onclick="classifyResumes()">Classify Resumes</button>
+      <div id="classification"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="container">
+  <small>
+    <a href="#">Privacy</a> • <a href="#">GitHub</a> • <a href="#">Contact</a>
+  </small>
+</footer>
+
+<script>
+  const backendUrl = "http://localhost:8000"; // Replace with deployed backend if needed
+
+  async function rankResumes() {
+    const files = document.getElementById("rankFiles").files;
+    const domain = document.getElementById("domainSelect").value;
+    const result = document.getElementById("result");
+    result.innerHTML = "";
+
+    if (!files.length || !domain) {
+      result.innerHTML = "<p style='color:red;'>Please upload files and select a domain.</p>";
+      return;
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append("files", files[i]);  // key must match backend param
+    }
+
+    try {
+      const response = await fetch(`${backendUrl}/rank/?target_domain=${encodeURIComponent(domain)}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Ranking failed");
+
+      result.innerHTML = "<h4>Ranking Result</h4><ul>" +
+        Object.entries(data["Ranked Scores"])
+          .map(([filename, score]) => `<li><strong>${filename}</strong>: ${score}</li>`)
+          .join("") +
+        "</ul>";
+    } catch (error) {
+      result.innerHTML = `<p style="color:red;">${error.message}</p>`;
+    }
+  }
+
+  async function classifyResumes() {
+    const files = document.getElementById("classifyFiles").files;
+    const classification = document.getElementById("classification");
+    classification.innerHTML = "";
+
+    if (!files.length) {
+      classification.innerHTML = "<p style='color:red;'>Please upload files to classify.</p>";
+      return;
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append("files", files[i]);
+    }
+
+    try {
+      const response = await fetch(`${backendUrl}/classify/`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Classification failed");
+
+      classification.innerHTML = "<h4>Classification Result</h4><ul>" +
+        Object.entries(data["classified_domains"])
+          .map(([filename, info]) => `<li><strong>${filename}</strong>: ${info.domain}</li>`)
+          .join("") +
+        "</ul>";
+    } catch (error) {
+      classification.innerHTML = `<p style="color:red;">${error.message}</p>`;
+    }
+  }
+</script>
+
+</body>
+</html>
