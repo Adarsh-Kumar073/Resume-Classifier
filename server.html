@@ -61,6 +61,10 @@
     <section class="card">
       <h3>🎯 Rank Resumes</h3>
       <input type="file" id="rankFiles" multiple accept=".pdf" />
+      <br><br>
+      <button class="button-gradient" onclick="addMoreResumes()">➕ Add More Resumes</button>
+      <input type="file" id="extraRankFiles" multiple accept=".pdf" style="display: none;" />
+      <br><br>
       <label for="domainSelect">Select Domain for Ranking:</label>
       <select id="domainSelect">
         <option value="">-- Select Domain --</option>
@@ -114,7 +118,30 @@
 </footer>
 
 <script>
-  const backendUrl = "http://localhost:8000"; // Replace with deployed backend if needed
+  const backendUrl = "http://localhost:8000"; // Replace with deployed backend URL if needed
+
+  function addMoreResumes() {
+    const extraInput = document.getElementById("extraRankFiles");
+    extraInput.click();
+    extraInput.onchange = function () {
+      const mainInput = document.getElementById("rankFiles");
+      const dataTransfer = new DataTransfer();
+
+      // Add original files
+      for (let i = 0; i < mainInput.files.length; i++) {
+        dataTransfer.items.add(mainInput.files[i]);
+      }
+
+      // Add new files
+      for (let i = 0; i < extraInput.files.length; i++) {
+        dataTransfer.items.add(extraInput.files[i]);
+      }
+
+      // Assign back to main input
+      mainInput.files = dataTransfer.files;
+      extraInput.value = ""; // Reset extra input
+    };
+  }
 
   async function rankResumes() {
     const files = document.getElementById("rankFiles").files;
@@ -128,8 +155,8 @@
     }
 
     const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append("files", files[i]);  // key must match backend param
+    for (const file of files) {
+      formData.append("files", file);
     }
 
     try {
@@ -162,8 +189,8 @@
     }
 
     const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append("files", files[i]);
+    for (const file of files) {
+      formData.append("files", file);
     }
 
     try {
